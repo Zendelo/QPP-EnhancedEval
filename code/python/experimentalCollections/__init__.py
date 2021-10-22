@@ -1,1 +1,0 @@
-from .TrecCollections import *
