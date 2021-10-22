@@ -1,0 +1,1 @@
+RQV04Factors = ['collection', 'orSystem', 'stoplist', 'stemmer', 'retrievalFunction', 'predictor']
