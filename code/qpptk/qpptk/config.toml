@@ -3,38 +3,21 @@ title = "Global configurations"
 [environment]
     [environment.paths]
     # The root directory which will be used as the base path for all the environment paths
-    root_dir = "./" # Running local
-#    root_dir = "/research/remote/petabyte/users/oleg/"
-#    root_dir = "~/repos/"
+    root_dir = "./"
 #    text_index_dir = "ROBUST04/dump/"
-#    text_index_dir = "mini_dump/"
-#    ciff_index_file = "ciff_lite_indexes/robust04-Lucene-indri-krovetz.ciff"
-#    ciff_index_file = "ciff_indexes/robust04-Lucene-indri-krovetz.ciff"
-#    ciff_index_file = "ciff_indexes/robust04/robust04_Lucene_lingpipe_porter.ciff"
-#    ciff_index_file = "ciff_indexes/robust04-Lucene-terrier-krovetz.ciff"
-    #ciff_index_file = "ciff_indexes/robust04-Lucene-nostop-krovetz.ciff"
-    #ciff_index_file = "ciff_indexes/robust04-Lucene-nostop-porter.ciff"
     ciff_index_file = "ciff_indexes/robust04/robust04_Lucene_indri_porter.ciff"
 #    text_queries_file = "data/robust04.stemmed.qry"
-#    text_queries_file = "data/robust04.stemmed.qry_2"
-#    text_queries_file = "mini_dump/queries.txt"
-#    ciff_queries_file = "ciff_lite_query_indexes/robust04-Lucene-query-indri-krovetz.ciff"
-#    ciff_queries_file = "ciff_query_indexes/robust04-Lucene-query-indri-krovetz.ciff"
-#    ciff_queries_file = "ciff_query_indexes/robust04_Lucene_query_lingpipe_porter.ciff"
-    #ciff_queries_file = "ciff_query_indexes/robust04-Lucene-query-nostop-krovetz.ciff"
-#    ciff_queries_file = "ciff_query_indexes/robust04-Lucene-query-terrier-krovetz.ciff"
     ciff_queries_file = "ciff_query_indexes/robust04_Lucene_query_indri_porter.ciff"
     results_dir = "anova_qpp"
-#    results_dir = "anova_qpp_lite"
     # Directory for the DB files,
     db_dir = "qpptk/qpptk_db"
-#    db_dir = "qpptk/qpptk_db_lite"
 
     [environment.executables]
     # path to trec_eval executable
-    trec_eval = '/research/remote/petabyte/users/oleg/trec_eval-9.0.7/trec_eval'
+    trec_eval = '~/trec_eval-9.0.7/trec_eval'
 
 [parameters]
+
 mu = 1000
 # Number of docs to use for the RM construction
 fb_docs = 100
@@ -61,6 +44,3 @@ clarity_list_size = 1000
 #rm_fb_size = 100
 # Number of docs to re-rank with the RM, and calc the similarity
 #re_rank_list_size = 150
-
-#[logging]
-#output=
