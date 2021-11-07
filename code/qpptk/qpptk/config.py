@@ -8,6 +8,7 @@ from qpptk import ensure_dir, ensure_file
 
 CONFIG_FILE = './qpptk/config.toml'
 
+
 def set_index_dump_paths(index_dir):
     text_inv = ensure_file(os.path.join(index_dir, 'text.inv'))
     dict_txt = ensure_file(os.path.join(index_dir, 'dict_new.txt'))
