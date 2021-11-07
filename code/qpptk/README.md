@@ -1,30 +1,27 @@
 # qpptk - Query Performance Prediction Toolkit
-
-This package was written with python 3.7, it wasn't tested in any other versions.
-Currently the package uses a non-standard python package for [timing](https://github.com/nadavo/Timer),
-
-It should be installed by simply running:\
-`pip install -e git+https://github.com/Zendelo/qpptk` \
+ 
+To install qpptk start by running (from within this directory):\
+`pip install -e [path to qpptk]`  \
 [more about the -e option](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs) 
 
-Or by cloning the repo and installing with:\
-`pip install -e [path to qpptk repo]`
+The dependencies should be installed automatically, but to be on the safe side 
+you may also want to install the requirements.txt file first.\
+`pip install -r requirements.txt`  
 
-If the Timer package isn't installed by pip, it can be installed manually by running:\
-`pip install git+https://github.com/nadavo/Timer.git`
+The configurations are located in the file config.toml, some are also available through the command line.
+the path to the config.toml file should be first specified in the config.py file.
 
-The configurations are located in config.toml, some are also available through the command line.
 
 To run prediction or retrieval see the usage example below:
 
 ##### To run retrieval and predictions on all the ciff indexes and matching ciff queries:
 Modify the paths and run the script:\
-`python3.7 generate_all_script.py`
+`python3 generate_all_script.py`
 
 #### For specific results:
 
 ###### run the module qpptk_main.py
-`python3.7 qpptk/qpptk_main.py --help`:
+`python3 qpptk/qpptk_main.py --help`:
 
  
 ```
@@ -48,7 +45,7 @@ optional arguments:
 ```
 ###### In order to run predictions (given that the index and queries paths are set in the `config.toml` file)
 
-`python3.7 qpptk/qpptk_main.py --predict`
+`python3 qpptk/qpptk_main.py --predict`
 ```
 28/04/2020 23:39:48 INFO: Started initialize_text_index
 28/04/2020 23:39:51 INFO: initialize_text_index took 2.73 seconds to complete
