@@ -1,14 +1,13 @@
 import multiprocessing as mp
 from functools import partial
 
-import syct
 import pandas as pd
+import syct
 from syct import timer
 
 from qpptk import Config, IndexText, IndexDB, QueryParserText, QueryParserCiff, LocalManagerRetrieval, \
     add_topic_to_qdf, LocalManagerPredictorPre, LocalManagerPredictorPost, IndexTerrier, \
     ensure_dir
-from qpptk.load_terri_index import IndexTerri
 
 logger = Config.logger
 TREC_RES_COLUMNS = ['qid', 'iteration', 'docNo', 'rank', 'docScore', 'method']
@@ -112,11 +111,6 @@ def _run_multiprocess_sync(func, tasks, n_proc, **init_kwargs):
 
 # @timer(info)
 def pre_ret_prediction_full(qids, index, queries, n_proc=Config.N_PROC):
-    # result = {}
-    # for qid in qids:
-    #     result[qid] = run_prediction_process(qid, index, queries)
-    # df = pd.DataFrame.from_dict(result, orient='index')
-    # df.index = df.index.rename('qid')
     result = _run_multiprocess_sync(run_pre_prediction_process, qids, n_proc, index=index, queries=queries)
     df = pd.DataFrame(result)
     logger.debug(df)
@@ -134,7 +128,6 @@ def post_ret_prediction_full(qids, index, queries, results_df, n_proc=Config.N_P
 
 # @timer  # TODO: add debug level, and should add debugging each qid with time to a log file
 def run_ql_retrieval_process(qid):
-    # columns = ['qid', 'iteration', 'docNo', 'rank', 'docScore', 'method']
     timer = syct.Timer(f'QID: {qid}', logger=logger)
     process = LocalManagerRetrieval(index_obj=index, query_obj=queries, qid=qid)
     result = process.run_ql_retrieval()
@@ -148,7 +141,6 @@ def run_ql_retrieval_process(qid):
 
 @timer  # TODO: add debug level
 def run_rm_retrieval_process(qid, return_rm=False, __sorted_rm_terms=None):
-    # columns = ['qid', 'iteration', 'docNo', 'rank', 'docScore', 'method']
     timer = syct.Timer(f'QID: {qid}', logger=logger)
     process = LocalManagerRetrieval(index_obj=index, query_obj=queries, qid=qid)
     result, p_w_rm = process.run_rm_retrieval()
@@ -164,7 +156,6 @@ def run_rm_retrieval_process(qid, return_rm=False, __sorted_rm_terms=None):
 
 @timer  # TODO: add debug level
 def run_rm_rerank_retrieval_process(qid, ranking_set_docs=None, return_rm=False, __sorted_rm_terms=None):
-    # columns = ['qid', 'iteration', 'docNo', 'rank', 'docScore', 'method']
     timer = syct.Timer(f'QID: {qid}', logger=logger)
     process = LocalManagerRetrieval(index_obj=index, query_obj=queries, qid=qid)
     results_vec = ranking_set_docs if ranking_set_docs is not None else results_df.loc[
@@ -184,9 +175,6 @@ def run_rm_rerank_retrieval_process(qid, ranking_set_docs=None, return_rm=False,
 
 # TODO: add @time(info)
 def retrieval_full(qids, index, queries, n_proc=Config.N_PROC, method='ql', results_df=None):
-    # init_proc(index, queries)
-    # for qid in qids:
-    #     run_ql_retrieval_process(qid)
     if method == 'ql':
         result = _run_multiprocess_sync(run_ql_retrieval_process, qids, n_proc, index=index, queries=queries)
     elif method == 'rm':
@@ -200,12 +188,6 @@ def retrieval_full(qids, index, queries, n_proc=Config.N_PROC, method='ql', resu
     df = pd.concat(result)
     logger.debug(df)
     return df
-
-
-# @timer  # TODO: add debug level
-# def initialize_ciff_index(ciff_index):
-#     header, terms_dict, doc_records = parse_index_file(ciff_index)
-#     return IndexCiff(header, ciff_index, terms_dict, doc_records)
 
 
 @timer  # TODO: add debug level
@@ -232,19 +214,3 @@ def initialize_ciff_queries(queries_file):
 @timer  # TODO: add debug level
 def initialize_text_queries(queries_file):
     return QueryParserText(queries_file)
-
-# @timer
-# def main():
-#     index = initialize_ciff_index(CIFF_INDEX)
-#     # index = initialize_text_index(*Config.set_dump_paths(INDEX_DIR))
-#     # queries = initialize_ciff_queries(QUERIES_FILE)
-#     queries = initialize_text_queries(QUERIES_FILE)
-#     qids = queries.get_query_ids()
-#     # result = [run_retrieval_process(qids[1], index, queries)]
-#     # retrieval_full(qids, index, queries)
-#     prediction_full(qids, index, queries)
-#
-#
-# if __name__ == '__main__':
-#     main()
-#     # test()

@@ -2,15 +2,14 @@ import argparse
 import os
 import subprocess as sp
 import sys
-from functools import partial
 from glob import glob
 
 import pandas as pd
-from syct import timer
 from sklearn.metrics import pairwise_distances
+from syct import timer
 
 from qpptk import Config, set_index_dump_paths, ensure_file, ensure_dir, read_trec_res_file, \
-    QueryParserCiff, QueryParserText, QueryParserJsonl, add_topic_to_qdf, duplicate_qrel_file_to_qids, calc_ndcg
+    QueryParserCiff, QueryParserText, QueryParserJsonl, add_topic_to_qdf, calc_ndcg
 from qpptk.global_manager import pre_ret_prediction_full, \
     retrieval_full, initialize_db_index, initialize_text_index, post_ret_prediction_full, \
     initialize_terrier_index
@@ -123,9 +122,6 @@ def load_and_evaluate(prefix, ir_metric, method='pearson', title_only=False):
         corpus, stoplist, stemmer = _components
     else:
         print('Unknown format of index name')
-        # corpus, stoplist, stemmer = _components
-    # qrels_file = Config.QREL_FILE
-    # duplicate_qrel_file_to_qids(qrels_file, qids)
     try:
         eval_df = pd.read_table(f"{prefix}_QL.{ir_metric}", delim_whitespace=True, names=['qid', ir_metric],
                                 index_col=0)
@@ -256,7 +252,6 @@ def main():
         return qids, index, queries
 
     def init_readonly_index():  # TODO: should be init for terrier index
-        # index = initialize_db_index(db_dir)
         queries = get_queries_object()
         qids = queries.get_query_ids()
         index = initialize_terrier_index(index_path, partial_terms=queries.get_queries_df().columns)
@@ -350,16 +345,10 @@ def main():
                 predictions_df.loc[:, col].to_csv(f"{prefix_path}_{retrieval_method}_{col}.pre", sep=' ',
                                                   index=True, header=False, float_format=f"%.{PRECISION}f")
     if args.evaluate:
-        # method = 'spearman'
-        # method = 'kendall'
         method = 'pearson'
-        # queries = 'title'
         queries = 'all'
         ir_metric = 'ap@1000'
-        # ir_metric = 'ndcg@100'
-        # ir_metric = 'RR'
-        # ir_metric = 'ndcg@10'
-        # ir_metric = 'rbp-0.85'
+
         title_only = True if queries == 'title' else False
         if Config.BATCH_NAME:
             _prefix = prefix_path[::-1].replace('/', ' ', 1)[::-1].replace(' ', '/' + Config.BATCH_NAME + '/')

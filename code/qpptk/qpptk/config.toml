@@ -3,63 +3,24 @@ title = "Global configurations"
 [environment]
     [environment.paths]
     # The root directory which will be used as the base path for all the environment paths
-#    root_dir = "/research/local/oleg/" # Running local, good for drogon/balerion only
-#    root_dir = "/research/remote/petabyte/users/oleg/"
     root_dir = "~/repos/"
-#    root_dir = "~/work/"
-#    text_index_dir = "ROBUST04/dump/"
-#    text_index_dir = "mini_dump/"
-#    ciff_index_file = "ciff_indexes/robust04/robust04_Lucene_indri_porter.ciff"
-#    ciff_index_file = "ciff_indexes/robust04_Lucene_indri_krovetz.ciff"
-#    ciff_index_file = "ciff_indexes/robust04/robust04_Lucene_lingpipe_porter.ciff"
-#    ciff_index_file = "ciff_indexes/robust04/robust04_Lucene_terrier_krovetz.ciff"
-#    ciff_index_file = "ciff_indexes/robust04_Lucene_nostop_krovetz.ciff"
-#    ciff_index_file = "ciff_indexes/robust04/robust04_Lucene_indri_nostem.ciff"
-#    terrier_index_dir = "robust_krovetz_nostop_terrier"
-#    terrier_index_dir = "robust04_KrovetzStemmer_stop"
-#    terrier_index_dir = "cw12b_terrier/index/cw12b_krovetz_nostop"
 
-#    terrier_index_dir = "cw12b_terrier/index/cw12b_krovetz_terrier"
+#    text_index_dir = "mini_dump/"
+#    ciff_index_file = "ciff_indexes/robust04/robust04_Lucene_indri_nostem.ciff"
     terrier_index_dir = "qpp-Maik/docker/pyterrier-index/index"
 
-#    ciff_index_file = "ciff_indexes/robust04-Lucene-nostop-porter.ciff"
-#    ciff_index_file = "ciff_indexes/robust04/robust04_Lucene_indri_porter.ciff"
-#    ciff_index_file = "ciff_indexes/cw12b/cw12b_Indri_nostop_krovetz.ciff"
-#    text_queries_file = "data/robust04.stemmed.qry"
 #    text_queries_file = "data/cw12b.stemmed.stopped.qry"
-
     jsonl_queries_file = "qpp-Maik/docker/sample-input-full-rank/queries.jsonl"
-
-#    text_queries_file = "data/cw12b-uqv.stemmed.stopped.qry.part-1"
-
-#    text_queries_file = "data/robust04-uqv.stemmed.stopped.qry"
-#    text_queries_file = "data/robust04-uqv-dev.stemmed.stopped.qry"
-#    text_queries_file = "mini_dump/queries.txt"
-#    ciff_queries_file = "ciff_lite_query_indexes/robust04_Lucene_query_indri_krovetz.ciff"
 #    ciff_queries_file = "ciff_query_indexes/robust04_Lucene_query_indri_nostem.ciff"
-#    ciff_queries_file = "ciff_query_indexes/robust04_Lucene_query_lingpipe_porter.ciff"
-#    ciff_queries_file = "ciff_query_indexes/robust04_Lucene_query_nostop_krovetz.ciff"
-#    ciff_queries_file = "ciff_query_indexes/robust04_Lucene_query_terrier_krovetz.ciff"
-#    ciff_queries_file = "ciff_query_indexes/robust04_Lucene_query_indri_porter.ciff"
-#    results_dir = "eval_qpp_results"
+
+    #    results_dir = "eval_qpp_results"
     results_dir = "testing_docker"
-#    results_dir = "anova_qpp"
-#    log_file = 'qpptk_retr_cw.log'
-#    log_file = 'qpptk_predPre_cw.log'
-#    log_file = 'qpptk_testing.log'
-#    log_file = 'qpptk_robust_retr.log'
-#    results_dir = "anova_qpp/ecir"
+
+    log_file = 'qpptk_robust_retr.log'
+
     # Directory for the DB files
     db_dir = "qpptk/qpptk_db"
-#    db_dir = "qpptk/qpptk_db_lite"
     qrel_file = 'qpp-Maik/docker/sample-input-full-rank/sample.qrels'
-#    qrel_file = 'qpptk/robust04_mod.qrels'
-#    qrel_file = 'data/robust04.qrels'
-#    qrel_file = 'data/cw12b-uqv_mod.qrels'
-#    qrel_file = 'data/cw12b_mod.qrels.trec'
-#    batch_name = '3392985365'
-
-
 
     [environment.executables]
     # path to trec_eval executable
@@ -82,9 +43,9 @@ title = "Global configurations"
     num_processes = 1
 
     [parameters.prediction]
-        wig_list_size = 10 # ECIR
-        nqc_list_size = 100 # ECIR
-        smv_list_size = 100 # ECIR
+        wig_list_size = 10 # Good for Robust04
+        nqc_list_size = 100 # Good for Robust04
+        smv_list_size = 100 # Good for Robust04
         # Number of top terms from RM to use in Clarity
         clarity_fb_terms = 100
         # Number of docs to use for the RM construction in Clarity
