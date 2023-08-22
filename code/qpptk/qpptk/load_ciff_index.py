@@ -1,7 +1,7 @@
 from syct import timer
 
 import qpptk.CommonIndexFileFormat_pb2 as ciff
-from qpptk import TermPosting, Posting, TermRecord, DocRecord, read_message
+from qpptk import TermPosting, Posting, TermRecord, DocRecord, read_message, Config
 
 """
 An index stored in CIFF is a single file comprised of exactly the following:
@@ -10,7 +10,11 @@ An index stored in CIFF is a single file comprised of exactly the following:
     - Exactly the number of DocRecord messages specified in the num_doc record field of the Header
  """
 
-INDEX_CIFF_FILE = "/research/local/olz/ciff_indexes/robust04-Lucene-indri-krovetz.ciff"
+INDEX_CIFF_FILE = "/research/local/olz/ciff_indexes/robust04_Lucene_indri_krovetz.ciff"
+
+# INDEX_CIFF_FILE = "/research/local/olz/ciff_indexes/cw12b/cw12b_Indri_nostop_krovetz.ciff"
+
+logger = Config.logger
 
 
 def parse_posting_list(posting_list: ciff.PostingsList) -> TermPosting:
@@ -34,6 +38,7 @@ def parse_index_file(index_file):
         buf = fp.read()
         n = 0
         cur_n, header = read_message(buf, n, ciff.Header)
+        print(f'header:\n{header}')
         num_postings_lists = header.num_postings_lists
         for _ in range(num_postings_lists):
             n, _posting_list = read_message(buf, cur_n, ciff.PostingsList)
@@ -55,7 +60,12 @@ class IndexCiff:
         return TermPosting(term, 0, 0, tuple())  # Out of vocabulary terms
 
     def __init__(self, header, index_file, terms_dict, doc_records):
-        self.total_terms = header.total_terms_in_collection
+        sum_terms = sum(map(lambda x: x.doc_len, doc_records.values()))
+        if sum_terms != header.total_terms_in_collection:
+            logger.warn(f'total_terms_in_collection stat in the header != sum of all doc_lens')
+            logger.warn(f'header.total_terms_in_collection: {header.total_terms_in_collection}')
+            logger.warn(f'sum of all documents lengths: {sum_terms}')
+        self.total_terms = sum_terms
         assert header.total_docs == len(doc_records), f'total docs in header differs from total docs in doc_records'
         self.number_of_docs = header.total_docs
         with open(index_file, 'rb') as fp:

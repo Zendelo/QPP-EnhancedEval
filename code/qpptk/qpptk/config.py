@@ -6,7 +6,26 @@ import toml
 
 from qpptk import ensure_dir, ensure_file
 
-CONFIG_FILE = './qpptk/config.toml'
+# def __init_logger(self, logger):
+#     if logger:
+#         return logger
+#     logger = logging.getLogger(__name__)
+#     logger.setLevel(logging.INFO)
+#     if not logger.hasHandlers():
+#         formatter = logging.Formatter('{asctime} - {message}', datefmt="%H:%M:%S", style="{")
+#         handler = logging.StreamHandler()
+#         handler.setFormatter(formatter)
+#         logger.addHandler(handler)
+#     return logger
+
+# CONFIG_FILE = '/research/local/oleg/qpptk/qpptk/config.toml'
+
+
+# CONFIG_FILE = '/research/remote/petabyte/users/oleg/qpptk/qpptk/config.toml'
+CONFIG_FILE = '~/repos/qpptk/qpptk/config.toml'
+
+
+# CONFIG_FILE = '~/work/qpptk/qpptk/config.toml'
 
 
 def set_index_dump_paths(index_dir):
@@ -31,25 +50,37 @@ class Config:
     WORKING_SET_SIZE = parameters.get('working_set_size', None)
     FB_TERMS = parameters.get('fb_terms')
     NUM_DOCS = parameters.get('max_result_size')
-    logging_level = parameters.get('logging_level', 'DEBUG')
+
     N_PROC = parameters.get('num_processes', 1)
-    logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', datefmt='%d/%m/%Y %H:%M:%S',
-                        level=logging_level)
-    logger = logging.getLogger(__name__)
+
     prediction_parameters = parameters.get('prediction')
     WIG_LIST_SIZE = prediction_parameters.get('wig_list_size')
     NQC_LIST_SIZE = prediction_parameters.get('nqc_list_size')
     SMV_LIST_SIZE = prediction_parameters.get('smv_list_size')
+
     CLARITY_FB_TERMS = prediction_parameters.get('clarity_fb_terms')
     CLARITY_LIST_SIZE = prediction_parameters.get('clarity_list_size')
-    uef_parameters = prediction_parameters.get('uef')
-    UEF_RM_FB_PARAM = uef_parameters.get('rm_fb_size')
-    UEF_SIM_PARAM = uef_parameters.get('re_rank_list_size')
+
+    QF_FB_TERMS = prediction_parameters.get('qf_fb_terms')
+    QF_LIST_SIZE = prediction_parameters.get('qf_list_size')
+    QF_OVERLAP_SIZE = prediction_parameters.get('qf_overlap_size')
+
+    UEF_FB_TERMS = prediction_parameters.get('uef_fb_terms')
+    UEF_LIST_SIZE = prediction_parameters.get('uef_list_size')
+    UEF_RANKING_SIZE = prediction_parameters.get('uef_ranking_size')
+
+    logging_level = parameters.get('logging_level', 'DEBUG')
+    # logging_level = logging.DEBUG
+
+    # uef_parameters = prediction_parameters.get('uef')
+    # UEF_RM_FB_PARAM = uef_parameters.get('rm_fb_size')
+    # UEF_SIM_PARAM = uef_parameters.get('re_rank_list_size')
 
     env = config.get('environment')
 
     executables = env.get('executables')
     TREC_EVAL = executables.get('trec_eval')
+    RBP_EVAL = executables.get('rbp_eval')
 
     env_paths = env.get('paths')
     _root_dir = env_paths.get('root_dir')
@@ -58,7 +89,24 @@ class Config:
     _root_dir = ensure_dir(_root_dir, False)
     INDEX_DIR = env_paths.get('text_index_dir')
     CIFF_INDEX = env_paths.get('ciff_index_file')
-    assert not (INDEX_DIR and CIFF_INDEX), f"Only one type of Index can be specified in the configurations file"
+    TERRIER_INDEX = env_paths.get('terrier_index_dir')
+
+    BATCH_NAME = env_paths.get('batch_name', '')
+
+    assert sum((bool(TERRIER_INDEX), bool(CIFF_INDEX), bool(INDEX_DIR))) <= 1, \
+        f"Only one type of Index can be specified in the configurations file"
+
+    RESULTS_DIR = ensure_dir(os.path.join(_root_dir, env_paths.get('results_dir')), True)
+
+    log_file = env_paths.get('log_file')
+    if log_file:
+        log_file = os.path.join(RESULTS_DIR, log_file)
+    logging.basicConfig(filename=log_file, format='%(asctime)s %(levelname)s: %(message)s',
+                        datefmt='%d/%m/%Y %H:%M:%S',
+                        level=logging_level)
+    logger = logging.getLogger(__name__)
+
+    DB_DIR = ensure_dir(os.path.join(_root_dir, env_paths.get('db_dir')), True)
 
     if INDEX_DIR:
         try:
@@ -76,11 +124,25 @@ class Config:
             logger.warning(err)
             logger.warning(f"The setting 'ciff_index_file={CIFF_INDEX}' in the config file was skipped")
             CIFF_INDEX = None
+    elif TERRIER_INDEX:
+        try:
+            # Index dump paths
+            TERRIER_INDEX = ensure_dir(os.path.join(_root_dir, TERRIER_INDEX), create_if_not=False)
+            ensure_file(os.path.join(TERRIER_INDEX, 'data.properties'))
+        except FileNotFoundError as err:
+            logger.warning(err)
+            logging.warning(f"The setting 'terrier_index_dir={TERRIER_INDEX}'"
+                            f"in the config file was skipped, data.properties file is missing")
+            INDEX_DIR = None
 
     TEXT_QUERIES = env_paths.get('text_queries_file')
     CIFF_QUERIES = env_paths.get('ciff_queries_file')
-    assert not (TEXT_QUERIES and CIFF_QUERIES), f"Only a single type of queries file can be specified" \
-                                                f" in the configurations file"
+    JSONL_QUERIES = env_paths.get('jsonl_queries_file')
+    QREL_FILE = os.path.join(_root_dir, env_paths.get('qrel_file'))
+
+    assert sum((bool(TEXT_QUERIES), bool(CIFF_QUERIES), bool(JSONL_QUERIES))) == 1, \
+        f"Only one type of queries file can be specified in the configurations file"
+
     if TEXT_QUERIES:
         try:
             TEXT_QUERIES = ensure_file(os.path.join(_root_dir, TEXT_QUERIES))
@@ -95,9 +157,13 @@ class Config:
             logger.warning(err)
             logger.warning(f"The setting 'ciff_queries_file={CIFF_QUERIES}' in the config file was skipped")
             CIFF_QUERIES = None
-
-    RESULTS_DIR = ensure_dir(os.path.join(_root_dir, env_paths.get('results_dir')), True)
-    DB_DIR = ensure_dir(os.path.join(_root_dir, env_paths.get('db_dir')), True)
+    elif JSONL_QUERIES:
+        try:
+            JSONL_QUERIES = ensure_file(os.path.join(_root_dir, JSONL_QUERIES))
+        except FileNotFoundError as err:
+            logger.warning(err)
+            logger.warning(f"The setting 'jsonl_queries_file={JSONL_QUERIES}' in the config file was skipped")
+            JSONL_QUERIES = None
 
     @staticmethod
     def get_logger():
