@@ -1,5 +1,6 @@
 import linecache
 import os
+import pickle
 from bisect import bisect_left
 
 import matplotlib.pyplot as plt
@@ -7,6 +8,10 @@ import msgpack
 import pandas as pd
 from google.protobuf.internal.decoder import _DecodeVarint32
 from sklearn.metrics import roc_curve, auc
+import numpy as np
+
+TREC_RES_COLUMNS = ['qid', 'iteration', 'docNo', 'rank', 'docScore', 'method']
+TREC_QREL_COLUMNS = ['qid', 'iteration', 'docNo', 'rel']
 
 
 def get_file_len(file_path):
@@ -40,6 +45,7 @@ def ensure_dir(file_path, create_if_not=True):
     """
     The function ensures the dir exists,
     if it doesn't it creates it and returns the path or raises FileNotFoundError
+    In case file_path is an existing file, returns the path of the parent directory
     """
     # tilde expansion
     file_path = os.path.normpath(os.path.expanduser(file_path))
@@ -83,6 +89,10 @@ def jaccard_similarity(set_1, set_2):
 
 def overlap_coefficient(set_1, set_2):
     return len(set_1.intersection(set_2)) / min(len(set_1), len(set_2))
+
+
+def sorensen_dice_similarity(set_1, set_2):
+    return 2 * len(set_1.intersection(set_2)) / (len(set_1) + len(set_2))
 
 
 def duplicate_qrel_file_to_qids(qrel_file, qids):
@@ -143,3 +153,92 @@ def plot_roc(y_test, y_pred, predictor_name):
     plt.ylabel('True Positive Rate (Sensitivity/Recall)')
     plt.xlabel('False Positive Rate (1-Specificity)')
     plt.show()
+
+
+def pickle_save_obj(obj, file_name: str):
+    if not file_name.endswith('.pkl'):
+        file_name += '.pkl'
+    with open(file_name, 'wb') as f:
+        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
+
+
+def pickle_load_obj(file_name: str):
+    if not file_name.endswith('.pkl'):
+        file_name += '.pkl'
+    with open(file_name, 'rb') as f:
+        return pickle.load(f)
+
+
+def load_generate_pickle_df(file_name: str, func, *args):
+    try:
+        _df = pd.read_pickle(file_name)
+    except FileNotFoundError:
+        _df = func(*args)
+        _df.to_pickle(file_name)
+    return _df
+
+
+def calc_ndcg(qrels_file, results_file, k, logger=None, base=2, gdeval=True):
+    """
+    Setting gdeval will yield identical results to the official evaluation script that was published for TREC.
+    Note that the calculation in that script differs from (probably) any published research version.
+    :param qrels_file:
+    :param results_file:
+    :param k:
+    :param logger:
+    :param base:
+    :param gdeval:
+    :return:
+    """
+    # Reading and sorting the qrels, to later speed-up indexing and locating
+    qrels_df = pd.read_csv(qrels_file, delim_whitespace=True, names=TREC_QREL_COLUMNS). \
+        sort_values(['qid', 'rel', 'docNo'], ascending=[True, False, True]).set_index(['qid', 'docNo'])
+    qrels_df['rel'].clip(lower=0, inplace=True)
+
+    # Store beginning and end indices for each query - used for speed up
+    qid_res_len = qrels_df.groupby('qid').apply(len)
+    qid_end_loc = qid_res_len.cumsum()
+    qid_start_loc = qid_end_loc - qid_res_len
+    qrels_df = qrels_df.droplevel(0)
+
+    if isinstance(results_file, str):
+        results_df = pd.read_csv(results_file, delim_whitespace=True, names=TREC_RES_COLUMNS)
+    elif isinstance(results_file, pd.DataFrame):
+        results_df = results_file
+    else:
+        raise TypeError
+    if gdeval:
+        results_df = results_df.sort_values(['qid', 'docScore', 'docNo'], ascending=[True, False, False]).groupby(
+            'qid').head(k)
+        discount = np.log(np.arange(1, k + 1) + 1)
+    else:
+        results_df = results_df.sort_values(['qid', 'rank']).groupby('qid').head(k)
+        discount = np.concatenate((np.ones(base), np.log(np.arange(base, k) + 1) / np.log(base)))
+    result = {}
+    for qid, _df in results_df.groupby('qid'):
+        docs = _df['docNo'].to_numpy()
+        try:
+            _qrels_df = qrels_df.iloc[qid_start_loc.loc[qid]: qid_end_loc.loc[qid]]
+        except KeyError as err:
+            if logger is None:
+                print(f'query id {err} doesn\'t exist in the qrels file, skipping it')
+            else:
+                logger.warning(f'query id {err} doesn\'t exist in the qrels file, skipping it')
+            continue
+        if gdeval:
+            dcg = 2 ** _qrels_df.reindex(docs)['rel'].fillna(0).to_numpy() - 1
+            idcg = ((2 ** _qrels_df['rel'].head(k) - 1) / discount[:len(_qrels_df)]).sum()
+        else:
+            dcg = _qrels_df.reindex(docs)['rel'].fillna(0).to_numpy()
+            idcg = (_qrels_df['rel'].head(k) / discount[:len(_qrels_df)]).sum()
+        result[qid] = (dcg / discount[:len(dcg)]).sum() / idcg
+    res_df = pd.DataFrame.from_dict(result, orient='index', columns=[f'nDCG@{k}'])
+    #     res_df.to_csv(rreplace(results_file, 'run', f'ndcg@{k}', 1), sep='\t', float_format='%.6f', header=False)
+    #     print(res_df.to_string(float_format='%.5f'))
+    #     print(f'Mean: {res_df.mean()[0]:.5f}')
+    return res_df
+
+
+def rreplace(string, old, new, count):
+    # TODO: Try and implement an extended version of str class
+    return new.join(string.rsplit(old, count))
