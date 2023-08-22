@@ -30,7 +30,11 @@ class LocalManagerPredictorPost:
         """
         Y. Zhou and W. B. Croft. Query performance prediction in web search environments
         """
-        scores_vec = self.scores_vec[:list_size_param]
+        try:
+            scores_vec = self.scores_vec[:list_size_param]
+        except IndexError as err:
+            print(err)
+            print(self.qid)
         return (scores_vec.mean() - self.ql_corpus_score) / np.sqrt(len(self.query))
 
     def calc_nqc(self, list_size_param):
@@ -54,6 +58,17 @@ class LocalManagerPredictorPost:
         """
         terms_cf = self.index.get_terms_cf_vec(p_w_rm['term_id'])
         _p_w_rm = p_w_rm['term_score'] / p_w_rm['term_score'].sum()
+        corpus_lm = terms_cf['term_cf'] / self.index.total_terms
+        return np.log(_p_w_rm / corpus_lm).dot(_p_w_rm)
+
+    def calc_dfr_info_bo2(self, p_w_rm):
+        # FIXME: Need to construct the RM* based on the top k=(10) documents
+        """
+        Amati Giambattista, Carpineto Claudio and Romano Giovanni.
+        Query Difficulty, Robustness, and Selective Application of Query Expansion
+        """
+        terms_cf = self.index.get_terms_cf_vec(p_w_rm['term_id'])
+        _p_w_rm = p_w_rm['term_score'] / p_w_rm['term_score'].sum()
         corpus_lm = np.array([terms_cf, ]) / self.index.total_terms
         return np.log(_p_w_rm / corpus_lm).dot(_p_w_rm)[0]
 
@@ -66,3 +81,11 @@ class LocalManagerPredictorPost:
         similarity = results_df.loc[self.qid, ['docNo', 'docScore']].set_index('docNo', drop=True).corrwith(
             rm_results_df.loc[:, ['docNo', 'docScore']].set_index('docNo', drop=True))[0]
         return similarity * predictor_result
+
+    def calc_qf(self, list_size_param, rm_results_df):
+        """
+        Zhou, Yun and Croft, W Bruce. Query Performance Prediction in Web Search Environments.
+        """
+        original_docs_set = set(self.results_df.loc[self.qid].head(list_size_param).docNo)
+        overlap = len(original_docs_set.intersection(rm_results_df.head(list_size_param).docNo)) / list_size_param
+        return overlap

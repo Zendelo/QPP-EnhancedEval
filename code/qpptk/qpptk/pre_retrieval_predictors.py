@@ -1,6 +1,7 @@
 import numpy as np
 
-from qpptk import IndexDB as Index
+# from qpptk import IndexDB as Index
+from qpptk import IndexTerrier as Index
 
 
 class LocalManagerPredictorPre:
@@ -67,9 +68,9 @@ class LocalManagerPredictorPre:
         if not term_record:
             # If the term is OOV, the w_d_t is set to 0
             return 0
-        term_posting = dict(self.index.get_posting_list(term).posting_list)
+        term_posting = dict(self.index.get_posting_list(term))
         tf_vec = np.fromiter(term_posting.values(), dtype=int)
-        assert len(term_posting) == term_record.df, f'{term}: number of docs in posting different from df'
+        assert len(term_posting) == term_record.df, f'For term: "{term}" the number of docs in posting different from df'
         return 1 + np.log(tf_vec) * np.log(1 + self.total_docs / term_record.df)
 
     def _calc_raw_var(self):
