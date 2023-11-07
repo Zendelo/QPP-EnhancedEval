@@ -73,10 +73,10 @@ class IndexTerrier:
         return self.__terms_cf_vec
 
     def init_pt_index(self):
-        if not pt.started():
-            pt.init(no_download=True)
-        else:
-            print('*** A PyTerrier was already initialized, will try to load a new index ***')
+        # import and start pyterrier so that it works within tira and outside of tira
+        from tira.third_party_integrations import ensure_pyterrier_is_loaded
+        ensure_pyterrier_is_loaded()
+
         _index_file = ensure_file(os.path.join(self.index_dir, 'data.properties'))
         _indexref = pt.IndexRef.of(_index_file)
         return pt.IndexFactory.of(_indexref)
