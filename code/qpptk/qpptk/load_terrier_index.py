@@ -74,7 +74,7 @@ class IndexTerrier:
 
     def init_pt_index(self):
         if not pt.started():
-            pt.init()
+            pt.init(no_download=True)
         else:
             print('*** A PyTerrier was already initialized, will try to load a new index ***')
         _index_file = ensure_file(os.path.join(self.index_dir, 'data.properties'))

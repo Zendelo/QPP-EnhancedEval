@@ -26,3 +26,10 @@ If you update any dependencies, please rebuild the dev container via:
 docker build -f docker/Dockerfile.dev -t mam10eks/qpptk:0.0.1-dev .
 ```
 
+## Upload to TIRA
+
+```
+docker tag mam10eks/qpptk:0.0.1 registry.webis.de/code-research/tira/tira-user-qpptk/qpptk:0.0.1
+docker push registry.webis.de/code-research/tira/tira-user-qpptk/qpptk:0.0.1
+```
+
