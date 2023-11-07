@@ -22,6 +22,7 @@ def parse_args():
     index_group.add_argument('-ci', '--ciff_index', metavar='INDEX', type=str, default=None, help='path to ciff index file')
     index_group.add_argument('-ti', '--terrier_index', metavar='INDEX', type=str, default=None,
                          help='path to terrier index dir')
+    
 
     queries_group = parser.add_mutually_exclusive_group()
     queries_group.add_argument('-tq', '--text_queries', metavar='QUERIES', default=None, help='path to text queries file')
@@ -49,6 +50,7 @@ def parse_args():
 
     parser.add_argument('--output', default=None, required=False, help='The output directory')
     parser.add_argument('--cleanOutput', action='store_true', help='Clean all temporary output files and output only a joined jsonl file')
+    parser.add_argument('--stats_index_path', type=str, default=None, help='location of the index statistics')
 
     return parser.parse_args()
 
@@ -261,13 +263,13 @@ def main():
     def init_readonly_index():  # TODO: should be init for terrier index
         queries = get_queries_object()
         qids = queries.get_query_ids()
-        index = initialize_terrier_index(index_path, partial_terms=queries.get_queries_df().columns)
+        index = initialize_terrier_index(index_path, partial_terms=queries.get_queries_df().columns, stats_index_path=args.stats_index_path)
         index_hash = index().partial_terms_hash
         return qids, index, queries, index_hash
 
     def init_writeable_index():
         queries = get_queries_object()
-        return initialize_terrier_index(index_path, partial_terms=queries.get_queries_df().columns, read_only=False)()
+        return initialize_terrier_index(index_path, partial_terms=queries.get_queries_df().columns, read_only=False, stats_index_path=args.stats_index_path)()
 
     index_path, index_type = set_index_paths()
     if index_type == 'text':

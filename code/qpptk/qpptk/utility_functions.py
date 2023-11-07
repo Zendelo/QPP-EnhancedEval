@@ -35,7 +35,7 @@ def binary_search(list_, target):
 def ensure_file(file):
     """Ensure a single file exists, returns the absolute path of the file if True or raises FileNotFoundError if not"""
     # tilde expansion
-    file_path = os.path.normpath(os.path.expanduser(file))
+    file_path = os.path.abspath(os.path.normpath(os.path.expanduser(file)))
     if not os.path.isfile(file_path):
         raise FileNotFoundError(f"The file {file_path} doesn't exist")
     return file_path

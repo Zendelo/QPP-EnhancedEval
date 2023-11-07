@@ -11,7 +11,7 @@ tira-run \
 	--input-directory ${PWD}/docker/sample-input-full-rank \
 	--input-run ${PWD}/docker/pyterrier-index \
 	--image mam10eks/qpptk:0.0.1 \
-	--command 'python3 /qpptk_main.py -ti $inputRun/index/ --jsonl_queries $inputDataset/queries.jsonl --predict --retrieve --output $outputDir --cleanOutput'
+	--command 'python3 /qpptk_main.py -ti $inputRun/index/ --jsonl_queries $inputDataset/queries.jsonl --predict --retrieve --output $outputDir --cleanOutput --stats_index_path /tmp'
 ```
 
 ## Build the Docker Images

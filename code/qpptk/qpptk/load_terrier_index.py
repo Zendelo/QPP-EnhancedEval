@@ -27,7 +27,7 @@ class IndexTerrier:
             index_name = f'{index_name}_partial-{self.partial_terms_hash}'
         return str(index_name)
 
-    def __init__(self, terrier_index_dir, partial_terms=None, read_only=True):
+    def __init__(self, terrier_index_dir, partial_terms=None, read_only=True, stats_index_path=None):
         # TODO: looks like I need to init terrier only if going to generate
         """
         The index is loading a Terrier index and several python objects that were generated from the Terrier index.
@@ -40,9 +40,8 @@ class IndexTerrier:
             logger.warn("It should be used only in the main process, "
                         "during parallel runs the index should be used as read-only")
         self.index_dir = ensure_dir(terrier_index_dir)
-        # self._index = self.init_pt_index()
-        # logger.warn('*** An Index was loaded ***')
-        # print(f'{self._index} \n {type(self._index)} \n {id(self._index)}')
+        self.stats_index_dir = ensure_dir(stats_index_path if stats_index_path else self.index_dir)
+
         self.index_stats = self.__load_generate_stats_dict(_generate)
         self.total_terms = self.index_stats.get('total_terms')
         self.number_of_docs = self.index_stats.get('number_of_docs')
@@ -95,7 +94,7 @@ class IndexTerrier:
         return terms_records
 
     def __load_generate_stats_dict(self, generate):
-        stats_dict_file = os.path.join(self.index_dir, 'stats_dict.pkl')
+        stats_dict_file = os.path.join(self.stats_index_dir, 'stats_dict.pkl')
         if generate:
             _index = self.init_pt_index()
             _stats = _index.getCollectionStatistics().toString()
@@ -116,7 +115,7 @@ class IndexTerrier:
         return stats_dict
 
     def __load_generate_terms_dict(self, generate):
-        terms_dict_file = os.path.join(self.index_dir, 'terms_dict.pkl')
+        terms_dict_file = os.path.join(self.stats_index_dir, 'terms_dict.pkl')
         try:
             terms_dict_file = ensure_file(terms_dict_file)
             terms_records = pickle_load_obj(terms_dict_file)
@@ -141,7 +140,7 @@ class IndexTerrier:
         return docs_records
 
     def __load_generate_docs_dict(self, generate):
-        docs_records_file = os.path.join(self.index_dir, 'docs_dict.pkl')
+        docs_records_file = os.path.join(self.stats_index_dir, 'docs_dict.pkl')
         try:
             docs_records_file = ensure_file(docs_records_file)
             docs_records = pickle_load_obj(docs_records_file)
@@ -232,8 +231,8 @@ class IndexTerrier:
 
     @timer
     def initialize_full_postings_sparse_mat(self, generate):
-        terms_postings_mat_file = os.path.join(self.index_dir, f'full_terms_postings_mat.npz')
-        terms_mapping_file = os.path.join(self.index_dir, f'full_terms_mapping.pkl')
+        terms_postings_mat_file = os.path.join(self.stats_index_dir, f'full_terms_postings_mat.npz')
+        terms_mapping_file = os.path.join(self.stats_index_dir, f'full_terms_mapping.pkl')
         try:
             terms_mapping_file = ensure_file(terms_mapping_file)
             terms_postings_mat_file = ensure_file(terms_postings_mat_file)
@@ -251,8 +250,8 @@ class IndexTerrier:
 
     @timer
     def initialize_partial_postings_sparse_mat(self, partial_terms, generate):  # FIXME
-        terms_postings_mat_file = os.path.join(self.index_dir, f'partial_{self.partial_terms_hash}_postings_mat.npz')
-        terms_mapping_file = os.path.join(self.index_dir, f'partial_{self.partial_terms_hash}_mapping.pkl')
+        terms_postings_mat_file = os.path.join(self.stats_index_dir, f'partial_{self.partial_terms_hash}_postings_mat.npz')
+        terms_mapping_file = os.path.join(self.stats_index_dir, f'partial_{self.partial_terms_hash}_mapping.pkl')
         try:
             terms_mapping_file = ensure_file(terms_mapping_file)
             terms_postings_mat_file = ensure_file(terms_postings_mat_file)
