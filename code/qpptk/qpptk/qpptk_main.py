@@ -1,5 +1,6 @@
 import argparse
 import os
+import shutil
 import subprocess as sp
 import sys
 from glob import glob
@@ -47,6 +48,7 @@ def parse_args():
     parser.add_argument('--predPost', action='store_true', help='add this flag to run only post-retrieval predictors')
 
     parser.add_argument('--output', default=None, required=False, help='The output directory')
+    parser.add_argument('--cleanOutput', action='store_true', help='Clean all temporary output files and output only a joined jsonl file')
 
     return parser.parse_args()
 
@@ -356,7 +358,6 @@ def main():
         
         if combined_predictions:
             qid_to_preds = {}
-            df_combined_predictions = []
             for df in combined_predictions:
                 for _, i in df.iterrows():
                     if i['qid'] not in qid_to_preds:
@@ -367,6 +368,11 @@ def main():
                         qid_to_preds[i['qid']][k] = v
 
             pd.DataFrame([v for _, v in qid_to_preds.items()]).to_json(results_dir + '/queries.jsonl', lines=True, orient='records')
+
+    if args.cleanOutput:
+        for d in os.listdir(args.output):
+            if os.path.exists(args.output + '/' + d) and os.path.isdir(args.output + '/' + d):
+                shutil.rmtree(args.output + '/' + d)
 
     if args.evaluate:
         method = 'pearson'
@@ -401,3 +407,4 @@ if __name__ == '__main__':
         Config.RESULTS_DIR = args.output
 
     main()
+
