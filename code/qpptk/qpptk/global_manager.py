@@ -114,7 +114,7 @@ def pre_ret_prediction_full(qids, index, queries, n_proc=Config.N_PROC):
     result = _run_multiprocess_sync(run_pre_prediction_process, qids, n_proc, index=index, queries=queries)
     df = pd.DataFrame(result)
     logger.debug(df)
-    return add_topic_to_qdf(df).set_index(['topic', 'qid'])
+    return add_topic_to_qdf(df)
 
 
 # @timer(info)
@@ -123,7 +123,7 @@ def post_ret_prediction_full(qids, index, queries, results_df, n_proc=Config.N_P
                                     results_df=results_df)
     df = pd.DataFrame(result)
     logger.debug(df)
-    return add_topic_to_qdf(df).set_index(['topic', 'qid'])
+    return add_topic_to_qdf(df)
 
 
 # @timer  # TODO: add debug level, and should add debugging each qid with time to a log file

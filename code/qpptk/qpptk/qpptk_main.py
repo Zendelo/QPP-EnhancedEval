@@ -14,36 +14,41 @@ from qpptk.global_manager import pre_ret_prediction_full, \
     retrieval_full, initialize_db_index, initialize_text_index, post_ret_prediction_full, \
     initialize_terrier_index
 
-parser = argparse.ArgumentParser(description='Run QL retrieval or Query Performance Prediction')
-index_group = parser.add_mutually_exclusive_group()
-index_group.add_argument('--text_index', metavar='INDEX', type=str, default=None, help='path to text index dir')
-index_group.add_argument('-ci', '--ciff_index', metavar='INDEX', type=str, default=None, help='path to ciff index file')
-index_group.add_argument('-ti', '--terrier_index', metavar='INDEX', type=str, default=None,
+def parse_args():
+    parser = argparse.ArgumentParser(description='Run QL retrieval or Query Performance Prediction')
+    index_group = parser.add_mutually_exclusive_group()
+    index_group.add_argument('--text_index', metavar='INDEX', type=str, default=None, help='path to text index dir')
+    index_group.add_argument('-ci', '--ciff_index', metavar='INDEX', type=str, default=None, help='path to ciff index file')
+    index_group.add_argument('-ti', '--terrier_index', metavar='INDEX', type=str, default=None,
                          help='path to terrier index dir')
 
-queries_group = parser.add_mutually_exclusive_group()
-queries_group.add_argument('-tq', '--text_queries', metavar='QUERIES', default=None, help='path to text queries file')
-queries_group.add_argument('-cq', '--ciff_queries', metavar='QUERIES', default=None, help='path to ciff queries file')
-queries_group.add_argument('-jq', '--jsonl_queries', metavar='QUERIES', default=None, help='path to jsonl queries file')
+    queries_group = parser.add_mutually_exclusive_group()
+    queries_group.add_argument('-tq', '--text_queries', metavar='QUERIES', default=None, help='path to text queries file')
+    queries_group.add_argument('-cq', '--ciff_queries', metavar='QUERIES', default=None, help='path to ciff queries file')
+    queries_group.add_argument('-jq', '--jsonl_queries', metavar='QUERIES', default=None, help='path to jsonl queries file')
 
-parser.add_argument('-fq', '--filter_queries', metavar='FilterQUERIES', default=None,
-                    help='path to text queries file that will be used to filter the queries')
-parser.add_argument('-dq', '--drop_queries', metavar='DropQUERIES', default=None,
-                    help='path to text query ids file that will be used to drop the queries')
+    parser.add_argument('-fq', '--filter_queries', metavar='FilterQUERIES', default=None,
+                        help='path to text queries file that will be used to filter the queries')
+    parser.add_argument('-dq', '--drop_queries', metavar='DropQUERIES', default=None,
+                        help='path to text query ids file that will be used to drop the queries')
 
-parser.add_argument('--retrieve', action='store_true', help='add this flag to run retrieval')
-parser.add_argument('--method', choices=['ql', 'rm', 'rm_rerank'], default='ql',
-                    help='the method to be used in retrieval')
-parser.add_argument('--predict', action='store_true', help='add this flag to run predictions using ALL PREDICTORS')
-parser.add_argument('--evaluate', action='store_true', help='add this flag to run evaluation')
-parser.add_argument('--pairs_sim', action='store_true', help='Generates a file with similarity between all query pairs')
-parser.add_argument('--cluster_queries', action='store_true',
-                    help='Splits the queries file into separate files by similarity')
-parser.add_argument('--keep_duplicate_queries', action='store_true',
-                    help='By default duplicate queries per topic will be removed, use this option to keep them')
+    parser.add_argument('--retrieve', action='store_true', help='add this flag to run retrieval')
+    parser.add_argument('--method', choices=['ql', 'rm', 'rm_rerank'], default='ql',
+                        help='the method to be used in retrieval')
+    parser.add_argument('--predict', action='store_true', help='add this flag to run predictions using ALL PREDICTORS')
+    parser.add_argument('--evaluate', action='store_true', help='add this flag to run evaluation')
+    parser.add_argument('--pairs_sim', action='store_true', help='Generates a file with similarity between all query pairs')
+    parser.add_argument('--cluster_queries', action='store_true',
+                        help='Splits the queries file into separate files by similarity')
+    parser.add_argument('--keep_duplicate_queries', action='store_true',
+                        help='By default duplicate queries per topic will be removed, use this option to keep them')
 
-parser.add_argument('--predPre', action='store_true', help='add this flag to run only pre-retrieval predictors')
-parser.add_argument('--predPost', action='store_true', help='add this flag to run only post-retrieval predictors')
+    parser.add_argument('--predPre', action='store_true', help='add this flag to run only pre-retrieval predictors')
+    parser.add_argument('--predPost', action='store_true', help='add this flag to run only post-retrieval predictors')
+
+    parser.add_argument('--output', default=None, required=False, help='The output directory')
+
+    return parser.parse_args()
 
 logger = Config.logger
 
@@ -325,8 +330,11 @@ def main():
         if args.predict:
             args.predPre = True
             args.predPost = True
+
+        combined_predictions = []
         if args.predPre:
             predictions_df = pre_ret_prediction_full(qids, index, queries)
+            combined_predictions += [predictions_df]
             for col in predictions_df.columns:
                 predictions_df.loc[:, col].to_csv(f"{prefix_path}_PRE_{col}.pre", sep=' ', index=True,
                                                   header=False,
@@ -341,9 +349,25 @@ def main():
                 logger.error(error_msg)
                 sys.exit(error_msg)
             predictions_df = post_ret_prediction_full(qids, index, queries, read_trec_res_file(results_file))
+            combined_predictions += [predictions_df]
             for col in predictions_df.columns:
                 predictions_df.loc[:, col].to_csv(f"{prefix_path}_{retrieval_method}_{col}.pre", sep=' ',
                                                   index=True, header=False, float_format=f"%.{PRECISION}f")
+        
+        if combined_predictions:
+            qid_to_preds = {}
+            df_combined_predictions = []
+            for df in combined_predictions:
+                for _, i in df.iterrows():
+                    if i['qid'] not in qid_to_preds:
+                        qid_to_preds[i['qid']] = {}
+                    for k,v in i.items():
+                        if k == 'topic':
+                            continue
+                        qid_to_preds[i['qid']][k] = v
+
+            pd.DataFrame([v for _, v in qid_to_preds.items()]).to_json(results_dir + '/queries.jsonl', lines=True, orient='records')
+
     if args.evaluate:
         method = 'pearson'
         queries = 'all'
@@ -371,5 +395,9 @@ def main():
 
 
 if __name__ == '__main__':
-    args = parser.parse_args()  # defined and used as a "global" variable
+    args = parse_args()
+
+    if args.output:
+        Config.RESULTS_DIR = args.output
+
     main()
