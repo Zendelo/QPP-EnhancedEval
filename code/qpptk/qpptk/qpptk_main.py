@@ -15,7 +15,7 @@ from qpptk.global_manager import pre_ret_prediction_full, \
     retrieval_full, initialize_db_index, initialize_text_index, post_ret_prediction_full, \
     initialize_terrier_index
 
-def parse_args():
+def parse_args(args):
     parser = argparse.ArgumentParser(description='Run QL retrieval or Query Performance Prediction')
     index_group = parser.add_mutually_exclusive_group()
     index_group.add_argument('--text_index', metavar='INDEX', type=str, default=None, help='path to text index dir')
@@ -52,7 +52,7 @@ def parse_args():
     parser.add_argument('--cleanOutput', action='store_true', help='Clean all temporary output files and output only a joined jsonl file')
     parser.add_argument('--stats_index_path', type=str, default=None, help='location of the index statistics')
 
-    return parser.parse_args()
+    return parser.parse_args(args)
 
 logger = Config.logger
 
@@ -168,7 +168,7 @@ def load_and_evaluate(prefix, ir_metric, method='pearson', title_only=False):
     return sr
 
 
-def get_queries_object():
+def get_queries_object(args):
     drop_duplicates = not args.keep_duplicate_queries
     if args.text_queries:
         queries_path, queries_type = args.text_queries, 'text'
@@ -203,7 +203,7 @@ def get_queries_object():
             QueryParserCiff(queries_path, drop_queries_file='duplicated_qids.txt',
                             drop_duplicate_queries=drop_duplicates)
         elif queries_type == 'jsonl':
-            QueryParserJsonl(queries_path, drop_queries_file='duplicated_qids.txt',
+            QueryParserJsonl(queries_path, args.terrier_index, drop_queries_file='duplicated_qids.txt',
                              drop_duplicate_queries=drop_duplicates)
     else:
         if queries_type == 'text':
@@ -211,10 +211,10 @@ def get_queries_object():
         elif queries_type == 'ciff':
             return QueryParserCiff(queries_path, drop_duplicate_queries=drop_duplicates)
         elif queries_type == 'jsonl':
-            return QueryParserJsonl(queries_path, drop_duplicate_queries=drop_duplicates)
+            return QueryParserJsonl(queries_path, args.terrier_index, drop_duplicate_queries=drop_duplicates)
 
 
-def set_index_paths():
+def set_index_paths(args):
     index_path, index_type = (args.ciff_index, 'ciff') if args.ciff_index else (
         (args.text_index, 'text') if args.text_index else (args.terrier_index, 'terrier'))
     if index_path is None:
@@ -251,27 +251,29 @@ def cluster_queries(queries):
 
 
 @timer
-def main():
+def main(args):
+    if args.output:
+        Config.RESULTS_DIR = args.output
     results_dir = Config.RESULTS_DIR
 
     def init_db_index():
         index = initialize_db_index(db_dir)
-        queries = get_queries_object()
+        queries = get_queries_object(args)
         qids = queries.get_query_ids()
         return qids, index, queries
 
     def init_readonly_index():  # TODO: should be init for terrier index
-        queries = get_queries_object()
+        queries = get_queries_object(args)
         qids = queries.get_query_ids()
         index = initialize_terrier_index(index_path, partial_terms=queries.get_queries_df().columns, stats_index_path=args.stats_index_path)
         index_hash = index().partial_terms_hash
         return qids, index, queries, index_hash
 
     def init_writeable_index():
-        queries = get_queries_object()
+        queries = get_queries_object(args)
         return initialize_terrier_index(index_path, partial_terms=queries.get_queries_df().columns, read_only=False, stats_index_path=args.stats_index_path)()
 
-    index_path, index_type = set_index_paths()
+    index_path, index_type = set_index_paths(args)
     if index_type == 'text':
         dump_files = set_index_dump_paths(index_path)
     if index_type == 'ciff':
@@ -390,7 +392,7 @@ def main():
             f'{prefix_path}.eval_{ir_metric}_{method}_{queries}_queries.pkl')
 
     if args.pairs_sim:
-        cos_sim_df, jac_df, dsc_df = generate_pairs_similarity(get_queries_object())
+        cos_sim_df, jac_df, dsc_df = generate_pairs_similarity(get_queries_object(args))
         cos_sim_df.to_csv(f"{prefix_path}_pairwise_sim-cos.tsv", sep=' ', index=True, header=True,
                           float_format=f"%.{PRECISION}f")
         jac_df.to_csv(f"{prefix_path}_pairwise_sim-jac.tsv", sep=' ', index=True, header=True,
@@ -399,14 +401,8 @@ def main():
                       float_format=f"%.{PRECISION}f")
 
     if args.cluster_queries:
-        cluster_queries(get_queries_object())
+        cluster_queries(get_queries_object(args))
 
 
 if __name__ == '__main__':
-    args = parse_args()
-
-    if args.output:
-        Config.RESULTS_DIR = args.output
-
-    main()
-
+    main(parse_args(sys.argv[1:]))

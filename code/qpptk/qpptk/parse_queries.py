@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from syct import timer
 from lxml import etree
+import os
 from sklearn.cluster import KMeans
 
 # import qpptk.CommonIndexFileFormat_pb2 as ciff
@@ -201,8 +202,9 @@ class QueryParserText:
 
 
 class QueryParserJsonl:
-    def __init__(self, queries_jsonl_file, **kwargs):
+    def __init__(self, queries_jsonl_file, terrier_index, **kwargs):
         self.queries_file = queries_jsonl_file
+        self.terrier_index = os.path.abspath(terrier_index)
         self.raw_queries_df = self._read_queries()
         self.queries_sr = self._weight_queries()
         self.__queries_df = None
@@ -231,8 +233,37 @@ class QueryParserJsonl:
 
     def _read_queries(self, queries_file=None):  # FIXME: add an adaptation for tsv files
         _queries_file = queries_file if queries_file else self.queries_file
-        return pd.read_json(_queries_file, lines=True, dtype=str).rename(columns={'query': 'terms'})[
-            ['qid', 'terms']].set_index('qid').sort_index(key=qid_index_sort_key)
+        import pyterrier as pt
+        from tira.third_party_integrations import ensure_pyterrier_is_loaded
+        ensure_pyterrier_is_loaded()
+        from jnius import cast, autoclass
+        index_properties = cast('org.terrier.structures.PropertiesIndex', pt.IndexFactory.of(self.terrier_index)).getProperties().getProperty('termpipelines')
+
+        index_properties = index_properties.split(',')
+        # stopwords automatically handled later because they are oov
+        index_properties = [i for i in index_properties if i.lower() != 'stopwords']
+        if len(index_properties) == 1:
+            print("org.terrier.terms." + index_properties[0])
+            s = autoclass("org.terrier.terms." + index_properties[0])()
+            stemmer = lambda i: s.stem(i.strip()).strip()
+        elif len(index_properties) > 1:
+            raise ValueError('Could not handle ' + str(index_properties))
+        else:
+            stemmer = lambda i: i.strip()
+
+        t = autoclass("org.terrier.indexing.tokenisation.Tokeniser").getTokeniser()
+
+        def tokenize(text):
+            text = t.getTokens(text)
+            return ' '.join([stemmer(i) for i in text])
+
+
+
+        ret = pd.read_json(_queries_file, lines=True, dtype=str).rename(columns={'query': 'terms'})[
+            ['qid', 'terms']]
+        ret['terms'] = ret['terms'].apply(tokenize)
+
+        return ret.set_index('qid').sort_index(key=qid_index_sort_key)
 
     def _weight_queries(self):
         return self.raw_queries_df.terms.replace('', None).dropna().str.split().apply(transform_list_to_counts_dict)
