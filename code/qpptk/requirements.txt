@@ -13,3 +13,4 @@ statsmodels==0.14.0
 syct==0.4.3
 toml==0.10.2
 tqdm==4.62.3
+pytest

@@ -4,6 +4,7 @@ FROM mam10eks/qpptk:0.0.1-dev
 
 COPY code/qpptk/ /workspaces/QPP-EnhancedEval/code/qpptk
 
-RUN pip install -e .
+RUN pip install -e . \
+	&& pytest
 
 ENTRYPOINT [ "python3", "/qpptk_main.py" ]
