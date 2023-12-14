@@ -110,7 +110,7 @@ class IndexTerrier:
                 stats_dict = pickle_load_obj(stats_dict_file)
                 logger.info('Terrier index stats:\n' + '\n'.join([f'{k}: {v}' for k, v in stats_dict.items()]))
             except FileNotFoundError as er:
-                logger.warn(f'The file {stats_dict_file} can\'t be found, pass read_only=False to generate')
+                logger.warning(f'The file {stats_dict_file} can\'t be found, pass read_only=False to generate')
                 raise er
         return stats_dict
 
