@@ -348,7 +348,7 @@ def main(args):
                                                   header=False,
                                                   float_format=f"%.{PRECISION}f")
         if args.predPost:
-            retrieval_method = 'QL'
+            retrieval_method = 'QL' if args.run_file is None else 'RUN'
             try:
                 results_file = ensure_file(f'{prefix_path}_{retrieval_method}.res' if args.run_file is None else args.run_file)
             except FileNotFoundError:
@@ -356,11 +356,17 @@ def main(args):
                             f"add --retrieve option to create it first"
                 logger.error(error_msg)
                 sys.exit(error_msg)
-            predictions_df = post_ret_prediction_full(qids, index, queries, read_trec_res_file(results_file))
-            combined_predictions += [predictions_df]
-            for col in predictions_df.columns:
-                predictions_df.loc[:, col].to_csv(f"{prefix_path}_{retrieval_method}_{col}.pre", sep=' ',
-                                                  index=True, header=False, float_format=f"%.{PRECISION}f")
+            for list_size in [5, 10, 20, 50, 100, 1000]:
+                Config.WIG_LIST_SIZE = list_size
+                Config.NQC_LIST_SIZE = list_size
+                Config.SMV_LIST_SIZE = list_size
+                Config.CLARITY_LIST_SIZE = list_size
+
+                predictions_df = post_ret_prediction_full(qids, index, queries, read_trec_res_file(results_file))
+                combined_predictions += [predictions_df]
+                for col in predictions_df.columns:
+                    predictions_df.loc[:, col].to_csv(f"{prefix_path}_{retrieval_method}_{col}.pre", sep=' ',
+                                                      index=True, header=False, float_format=f"%.{PRECISION}f")
         
         if combined_predictions:
             qid_to_preds = {}
