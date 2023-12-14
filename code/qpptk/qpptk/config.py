@@ -18,14 +18,7 @@ from qpptk import ensure_dir, ensure_file
 #         logger.addHandler(handler)
 #     return logger
 
-# CONFIG_FILE = '/research/local/oleg/qpptk/qpptk/config.toml'
-
-
-# CONFIG_FILE = '/research/remote/petabyte/users/oleg/qpptk/qpptk/config.toml'
-CONFIG_FILE = '~/repos/qpptk/qpptk/config.toml'
-
-
-# CONFIG_FILE = '~/work/qpptk/qpptk/config.toml'
+CONFIG_FILE = os.path.dirname(os.path.realpath(__file__)) + '/config.toml'
 
 
 def set_index_dump_paths(index_dir):
