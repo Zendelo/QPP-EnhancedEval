@@ -3,6 +3,7 @@ import os
 import shutil
 import subprocess as sp
 import sys
+from pathlib import Path
 from glob import glob
 
 import pandas as pd
@@ -51,6 +52,7 @@ def parse_args(args):
     parser.add_argument('--output', default=None, required=False, help='The output directory')
     parser.add_argument('--cleanOutput', action='store_true', help='Clean all temporary output files and output only a joined jsonl file')
     parser.add_argument('--stats_index_path', type=str, default=None, help='location of the index statistics')
+    parser.add_argument('--run-file', type=Path, default=None, help='path to run file to be used for prediction post retrieval predictions')
 
     return parser.parse_args(args)
 
@@ -348,7 +350,7 @@ def main(args):
         if args.predPost:
             retrieval_method = 'QL'
             try:
-                results_file = ensure_file(f'{prefix_path}_{retrieval_method}.res')
+                results_file = ensure_file(f'{prefix_path}_{retrieval_method}.res' if args.run_file is None else args.run_file)
             except FileNotFoundError:
                 error_msg = f"The file {prefix_path}_{retrieval_method}.res doesn't exist," \
                             f"add --retrieve option to create it first"
