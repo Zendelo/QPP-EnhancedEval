@@ -1,4 +1,4 @@
-# docker build -f docker/Dockerfile.dev -t mam10eks/qpptk:0.0.1-dev .
+# docker build -f docker/Dockerfile.dev -t mam10eks/qpptk:0.0.2-dev .
 # We start from an image that already has Terrier + PyTerrier as dependencies installed
 FROM webis/ir-lab-wise-2023:0.0.1
 
@@ -9,6 +9,8 @@ WORKDIR /workspaces/QPP-EnhancedEval/code/qpptk
 RUN pip install -r requirements.txt \
 	&& rm -Rf * \
 	&& mkdir -p /root/repos/ \
+	&& apt-get update \
+	&& apt-get install -y curl wget git \
 	&& ln -s /workspaces/QPP-EnhancedEval/code/qpptk /root/repos/qpptk \
 	&& ln -s /workspaces/QPP-EnhancedEval/code/qpptk/qpptk/qpptk_main.py /qpptk_main.py
 

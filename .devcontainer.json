@@ -1,5 +1,5 @@
 {
-  "image": "mam10eks/qpptk:0.0.1-dev",
+  "image": "mam10eks/qpptk:0.0.2-dev",
   "customizations": {
     "vscode": {
       "extensions": ["ms-python.python", "ms-python.vscode-pylance", "ms-toolsai.jupyter"]
