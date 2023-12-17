@@ -1,5 +1,3 @@
-#multiple run files
-
 import unittest
 import os
 import tempfile
