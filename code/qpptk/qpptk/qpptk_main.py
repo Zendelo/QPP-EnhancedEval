@@ -12,6 +12,7 @@ from syct import timer
 
 from qpptk import Config, set_index_dump_paths, ensure_file, ensure_dir, read_trec_res_file, \
     QueryParserCiff, QueryParserText, QueryParserJsonl, add_topic_to_qdf, calc_ndcg
+from qpptk.score_replacement_prediction import replace_scores_in_run_file_with_reference_scores
 from qpptk.global_manager import pre_ret_prediction_full, \
     retrieval_full, initialize_db_index, initialize_text_index, post_ret_prediction_full, \
     initialize_terrier_index
@@ -52,7 +53,8 @@ def parse_args(args):
     parser.add_argument('--output', default=None, required=False, help='The output directory')
     parser.add_argument('--cleanOutput', action='store_true', help='Clean all temporary output files and output only a joined jsonl file')
     parser.add_argument('--stats_index_path', type=str, default=None, help='location of the index statistics')
-    parser.add_argument('--run-file', type=Path, default=None, help='path to run file to be used for prediction post retrieval predictions')
+    parser.add_argument('--run-file', type=Path, default=None, help='Path to run file to be used for prediction post retrieval predictions')
+    parser.add_argument('--use-scores-from-run-file', type=Path, default=None, help='Path to the run file containing retrieval scores: the --run-file run induces the ranking of documents, but this parameter induces the scores.')
 
     return parser.parse_args(args)
 
@@ -349,6 +351,10 @@ def main(args):
                                                   float_format=f"%.{PRECISION}f")
         if args.predPost:
             retrieval_method = 'QL' if args.run_file is None else 'RUN'
+            if args.use_scores_from_run_file:
+                logger.info(f"Replace scores in run {args.run_file} with the scores from {args.use_scores_from_run_file}.")
+                args.run_file = replace_scores_in_run_file_with_reference_scores(args.run_file, args.use_scores_from_run_file)
+
             try:
                 results_file = ensure_file(f'{prefix_path}_{retrieval_method}.res' if args.run_file is None else args.run_file)
             except FileNotFoundError:

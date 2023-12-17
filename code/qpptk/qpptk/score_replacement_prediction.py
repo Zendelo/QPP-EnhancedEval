@@ -1,7 +1,7 @@
 from pathlib import Path
 import tempfile
-from .utility_functions import read_trec_res_file
 import pandas as pd
+
 
 def replace_scores_in_run_file_with_reference_scores(run_file: Path, reference_run_file: Path) -> Path:
     """
@@ -12,6 +12,7 @@ def replace_scores_in_run_file_with_reference_scores(run_file: Path, reference_r
     :param run_file: The run file that induces the ranking of documents (e.g., BM25).
     :param reference_run_file: The run file that induces the scores of documents (e.g., derived by monoT5 small).
     """
+    from .utility_functions import read_trec_res_file
     run_file_parsed = read_trec_res_file(run_file)
     reference_scores = {}
     for qid, i in read_trec_res_file(reference_run_file).iterrows():
