@@ -17,7 +17,7 @@ class TestEndToEnd(unittest.TestCase):
 
             assert actual.iloc[0].to_dict()['avg-idf'] == 1.3296613489
             assert actual.iloc[0].to_dict()['avg-scq'] == 2.2134369757
-            assert actual.iloc[0].to_dict()['clarity+1000+3'] == 2.6980214786000003
+            assert actual.iloc[0].to_dict()['clarity+1000+100'] == 2.6980214786000003
             assert actual.iloc[0].to_dict()['max-idf'] == 1.7917594692
 
             assert actual.iloc[1].to_dict()['avg-idf'] == 1.0986122887

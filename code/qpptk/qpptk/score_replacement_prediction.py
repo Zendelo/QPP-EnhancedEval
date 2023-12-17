@@ -15,13 +15,14 @@ def replace_scores_in_run_file_with_reference_scores(run_file: Path, reference_r
     from .utility_functions import read_trec_res_file
     run_file_parsed = read_trec_res_file(run_file)
     reference_scores = {}
+    min_score = None
     for qid, i in read_trec_res_file(reference_run_file).iterrows():
         reference_scores[(qid, i['docNo'])] = i['docScore']
+        min_score = i['docScore'] if min_score is None else min(min_score, i['docScore'])
 
-    run_file_parsed['docScore'] = run_file_parsed.apply(lambda x: reference_scores[(x.name, x['docNo'])], axis=1)
     merged_run = []
     for qid, i in run_file_parsed.iterrows():
-        merged_run += [{'qid': qid, 'Q0': '0', 'docNo': i['docNo'], 'docRank': i['docRank'], 'docScore': reference_scores[(qid, i['docNo'])], 'system': 'merged'}]
+        merged_run += [{'qid': qid, 'Q0': '0', 'docNo': i['docNo'], 'docRank': i['docRank'], 'docScore': reference_scores.get((qid, i['docNo']), min_score), 'system': 'merged'}]
 
     ret = Path(tempfile.NamedTemporaryFile(delete=False).name)
     pd.DataFrame(merged_run).to_csv(ret, sep=' ', header=False, index=False)

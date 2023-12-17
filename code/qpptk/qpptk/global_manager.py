@@ -99,7 +99,7 @@ def run_post_prediction_process(qid):
     #         f'uef+{Config.UEF_LIST_SIZE}+{Config.UEF_RANKING_SIZE}-clarity+{Config.CLARITY_LIST_SIZE}+{clarity_terms_size}': uef_clarity,
     #         f'uef+{Config.UEF_LIST_SIZE}+{Config.UEF_RANKING_SIZE}-qf+{Config.QF_LIST_SIZE}+{Config.QF_FB_TERMS}+{Config.QF_OVERLAP_SIZE}': uef_qf}
     return {'qid': qid, f'wig+{Config.WIG_LIST_SIZE}': wig, f'nqc+{Config.NQC_LIST_SIZE}': nqc,
-            f'smv+{Config.SMV_LIST_SIZE}': smv, f'clarity+{Config.CLARITY_LIST_SIZE}+{clarity_terms_size}': clarity}
+            f'smv+{Config.SMV_LIST_SIZE}': smv, f'clarity+{Config.CLARITY_LIST_SIZE}+{Config.CLARITY_FB_TERMS}': clarity}
 
 
 def _run_multiprocess_sync(func, tasks, n_proc, **init_kwargs):
