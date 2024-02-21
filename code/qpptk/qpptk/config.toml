@@ -3,44 +3,73 @@ title = "Global configurations"
 [environment]
     [environment.paths]
     # The root directory which will be used as the base path for all the environment paths
-    root_dir = "./"
-#    text_index_dir = "ROBUST04/dump/"
-    ciff_index_file = "ciff_indexes/robust04/robust04_Lucene_indri_porter.ciff"
-#    text_queries_file = "data/robust04.stemmed.qry"
-    ciff_queries_file = "ciff_query_indexes/robust04_Lucene_query_indri_porter.ciff"
-    results_dir = "anova_qpp"
-    # Directory for the DB files,
+    root_dir = "~/repos/"
+
+#    text_index_dir = "mini_dump/"
+#    ciff_index_file = "ciff_indexes/robust04/robust04_Lucene_indri_nostem.ciff"
+    terrier_index_dir = "qpp-Maik/docker/pyterrier-index/index"
+
+#    text_queries_file = "data/cw12b.stemmed.stopped.qry"
+    jsonl_queries_file = "qpp-Maik/docker/sample-input-full-rank/queries.jsonl"
+#    ciff_queries_file = "ciff_query_indexes/robust04_Lucene_query_indri_nostem.ciff"
+
+    #    results_dir = "eval_qpp_results"
+    results_dir = "testing_docker"
+
+    log_file = 'qpptk_robust_retr.log'
+
+    # Directory for the DB files
     db_dir = "qpptk/qpptk_db"
+    qrel_file = 'qpp-Maik/docker/sample-input-full-rank/sample.qrels'
 
     [environment.executables]
     # path to trec_eval executable
-    trec_eval = '~/trec_eval-9.0.7/trec_eval'
+#    trec_eval = '/research/remote/petabyte/users/oleg/trec_eval-9.0.7/trec_eval'
+    trec_eval = '/home/s3806763/Downloads/trec_eval/trec_eval'
+#    rbp_eval = '/research/remote/petabyte/users/oleg/eval/rbp_eval'
+
 
 [parameters]
+    mu = 1000
+    # Number of docs to use for the RM construction
+    fb_docs = 100
+    # The maximum number of documents to use for the re-ranking, comment out to re-rank all docs in initial list
+    working_set_size = 100
+    # Number of top terms to use, *after* RM construction
+    fb_terms = 100
+    max_result_size = 1000
+    # predefined logging levels: CRITICAL, ERROR, WARNING, INFO, DEBUG
+    logging_level = 'DEBUG'
+    num_processes = 1
 
-mu = 1000
-# Number of docs to use for the RM construction
-fb_docs = 100
-# The maximum number of documents to use for the re-ranking, comment out to re-rank all docs in initial list
-working_set_size = 100
-# Number of top terms to use, *after* RM construction
-fb_terms = 100
-max_result_size = 1000
-# predefined logging levels: CRITICAL, ERROR, WARNING, INFO, DEBUG
-logging_level = 'DEBUG'
-num_processes = 25
+    [parameters.prediction]
+        wig_list_size = 10 # Good for Robust04
+        nqc_list_size = 100 # Good for Robust04
+        smv_list_size = 100 # Good for Robust04
+        # Number of top terms from RM to use in Clarity
+        clarity_fb_terms = 100
+        # Number of docs to use for the RM construction in Clarity
+        clarity_list_size = 1000
 
-[parameters.prediction]
-wig_list_size = 10
-nqc_list_size = 100
-smv_list_size = 100
-# Number of top terms from RM to use in Clarity
-clarity_fb_terms = 100
-# Number of docs to use for the RM construction in Clarity
-clarity_list_size = 1000
+        # Number of top terms from RM to use in QF
+        qf_fb_terms = 100
+        # Number of docs to use for the RM construction in QF
+        qf_list_size = 1000
+        # Number of docs to use for the overlap calc in QF
+        qf_overlap_size = 25
 
-[parameters.prediction.uef]
+        # Number of top terms from RM to use in UEF
+        uef_fb_terms = 100
+        # Number of docs to use for the RM construction in UEF
+        uef_list_size = 1000
+        # Number of docs to use for the re-ranking and comparison in UEF
+        uef_ranking_size = 100
 
-#rm_fb_size = 100
-# Number of docs to re-rank with the RM, and calc the similarity
-#re_rank_list_size = 150
+        #[parameters.prediction.uef]
+
+        #rm_fb_size = 100
+        # Number of docs to re-rank with the RM, and calc the similarity
+        #re_rank_list_size = 150
+
+#[logging]
+#output=

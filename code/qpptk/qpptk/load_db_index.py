@@ -19,6 +19,7 @@ class IndexDB:
         return TermPosting(term, 0, 0, tuple())  # Out of vocabulary terms
 
     def __init__(self, index_db_dir):
+        ensure_file(os.path.join(index_db_dir, 'data.mdb'))
         self.db_env = lmdb.open(index_db_dir, create=False, subdir=True, map_size=2 ** 39, readonly=True, max_dbs=3,
                                 lock=False)
         _stats = self.db_env.stat()
