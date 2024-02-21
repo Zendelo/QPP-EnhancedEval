@@ -23,6 +23,24 @@ class TirexIntegrationTest(unittest.TestCase):
             # I only spot-checked that the output looks reasonable, no in-depth tests
             verify_file(out_dir + '/queries.jsonl')
 
+    def test_on_cranfield_dataset_with_non_string_query_ids_approvaltests(self):
+        tira = Client()
+        index_dir = tira.get_run_output('ir-benchmarks/tira-ir-starter/Index (tira-ir-starter-pyterrier)', 'cranfield-20230107-training') + '/index'
+        queries = 'tests/resources/small-example-03/queries.jsonl'
+
+        with tempfile.TemporaryDirectory() as out_dir, tempfile.TemporaryDirectory() as stats_dir:
+            args = parse_args([
+                '-ti', index_dir,
+                '--jsonl_queries', queries,
+                '--output', out_dir,
+                '--stats_index_path',  stats_dir,
+                '--predict', '--retrieve', '--cleanOutput'
+            ])
+            main(args)
+
+            # I only spot-checked that the output looks reasonable, no in-depth tests
+            verify_file(out_dir + '/queries.jsonl')
+
     def test_on_cranfield_dataset_with_approvaltests_and_bm25_run(self):
         tira = Client()
         index_dir = tira.get_run_output('ir-benchmarks/tira-ir-starter/Index (tira-ir-starter-pyterrier)', 'cranfield-20230107-training') + '/index'

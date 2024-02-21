@@ -38,12 +38,6 @@ def parse_ciff_queries_file(queries_file):
     return header, queries_dict, query_records
 
 
-def qid_index_sort_key(index, ):
-    # return list(map(lambda s: np.array([100, 10, 1]).dot(np.array([int(x) for x in s.split('-')])), index.to_numpy()))
-    return list(
-        map(lambda s: np.array([int(x) * 10 ** (3 - i) for i, x in enumerate(s.split('-'))]).sum(), index.to_numpy()))
-
-
 class QueryParserCiff:
     def __init__(self, queries_file, **kwargs):
         header, queries_dict, query_records = parse_ciff_queries_file(queries_file)
@@ -132,7 +126,7 @@ class QueryParserText:
         _queries_file = queries_file if queries_file else self.queries_file
         with open(_queries_file, 'r') as fp:
             queries = [line.strip().split(None, maxsplit=1) for line in fp]
-        return pd.DataFrame(queries, columns=['qid', 'terms']).set_index('qid').sort_index(key=qid_index_sort_key)
+        return pd.DataFrame(queries, columns=['qid', 'terms']).set_index('qid')
 
     def _weight_queries(self):
         return self.raw_queries_df.terms.replace('', None).dropna().str.split().apply(transform_list_to_counts_dict)
@@ -257,13 +251,11 @@ class QueryParserJsonl:
             text = t.getTokens(text)
             return ' '.join([stemmer(i) for i in text])
 
-
-
         ret = pd.read_json(_queries_file, lines=True, dtype=str).rename(columns={'query': 'terms'})[
             ['qid', 'terms']]
         ret['terms'] = ret['terms'].apply(tokenize)
 
-        return ret.set_index('qid').sort_index(key=qid_index_sort_key)
+        return ret.set_index('qid')
 
     def _weight_queries(self):
         return self.raw_queries_df.terms.replace('', None).dropna().str.split().apply(transform_list_to_counts_dict)
