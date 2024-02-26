@@ -11,7 +11,7 @@ from qpptk import Config, IndexText, IndexDB, QueryParserText, QueryParserCiff, 
 
 logger = Config.logger
 TREC_RES_COLUMNS = ['qid', 'iteration', 'docNo', 'rank', 'docScore', 'method']
-
+QPP_SCORE_FOR_FAILED_RETRIEVAL = -1000000000
 
 def init_proc(*args):
     kwargs = dict(args)
@@ -26,6 +26,18 @@ def init_proc(*args):
     results_df = kwargs.get('results_df')
     ensure_dir(f'{Config.RESULTS_DIR}/temp/{index}', create_if_not=True)
 
+def run_pre_prediction_process_failsave(qid):
+    try:
+        return run_pre_prediction_process(qid)
+    except Exception as e:
+        logger.error(f'Error in QID, indicating that retrieval is not possible, e.g., due to only oov terms: {qid} - {e}')
+        # This indicates that the query with qid can not be predicted by the pre-retrieval predictors,
+        # e.g., due to only oov terms. Hence, it is easy to predict that the effectiveness of the query is very low, so we return a constant value indicating this.
+        return {
+            'qid': qid, 'max-idf': QPP_SCORE_FOR_FAILED_RETRIEVAL, 'avg-idf': QPP_SCORE_FOR_FAILED_RETRIEVAL, 'scq': QPP_SCORE_FOR_FAILED_RETRIEVAL, 'max-scq': QPP_SCORE_FOR_FAILED_RETRIEVAL,
+            'avg-scq': QPP_SCORE_FOR_FAILED_RETRIEVAL, 'var': QPP_SCORE_FOR_FAILED_RETRIEVAL,
+            'max-var': QPP_SCORE_FOR_FAILED_RETRIEVAL, 'avg-var': QPP_SCORE_FOR_FAILED_RETRIEVAL
+        }
 
 def run_pre_prediction_process(qid):
     timer = syct.Timer(f'QID: {qid}', logger=logger)
@@ -43,6 +55,19 @@ def run_pre_prediction_process(qid):
     return {'qid': qid, 'max-idf': max_idf, 'avg-idf': avg_idf, 'scq': scq, 'max-scq': max_scq, 'avg-scq': avg_scq,
             'var': var, 'max-var': max_var, 'avg-var': avg_var}
 
+def run_post_prediction_process_failsave(qid):
+    try:
+        return run_post_prediction_process(qid)
+    except Exception as e:
+        logger.error(f'Error in QID, indicating that retrieval is not possible, e.g., due to only oov terms: {qid} - {e}')
+        # This indicates that the query with qid can not be predicted by the pre-retrieval predictors,
+        # e.g., due to only oov terms. Hence, it is easy to predict that the effectiveness of the query is very low, so we return a constant value indicating this.
+        return {
+            'qid': qid, f'wig+{Config.WIG_LIST_SIZE}': QPP_SCORE_FOR_FAILED_RETRIEVAL,
+            f'nqc+{Config.NQC_LIST_SIZE}': QPP_SCORE_FOR_FAILED_RETRIEVAL,
+            f'smv+{Config.SMV_LIST_SIZE}': QPP_SCORE_FOR_FAILED_RETRIEVAL,
+            f'clarity+{Config.CLARITY_LIST_SIZE}+{Config.CLARITY_FB_TERMS}': QPP_SCORE_FOR_FAILED_RETRIEVAL
+        }
 
 def run_post_prediction_process(qid):
     timer = syct.Timer(f'QID: {qid}', logger=logger)
@@ -111,7 +136,7 @@ def _run_multiprocess_sync(func, tasks, n_proc, **init_kwargs):
 
 # @timer(info)
 def pre_ret_prediction_full(qids, index, queries, n_proc=Config.N_PROC):
-    result = _run_multiprocess_sync(run_pre_prediction_process, qids, n_proc, index=index, queries=queries)
+    result = _run_multiprocess_sync(run_pre_prediction_process_failsave, qids, n_proc, index=index, queries=queries)
     df = pd.DataFrame(result)
     logger.debug(df)
     return add_topic_to_qdf(df)
@@ -119,7 +144,7 @@ def pre_ret_prediction_full(qids, index, queries, n_proc=Config.N_PROC):
 
 # @timer(info)
 def post_ret_prediction_full(qids, index, queries, results_df, n_proc=Config.N_PROC):
-    result = _run_multiprocess_sync(run_post_prediction_process, qids, n_proc, index=index, queries=queries,
+    result = _run_multiprocess_sync(run_post_prediction_process_failsave, qids, n_proc, index=index, queries=queries,
                                     results_df=results_df)
     df = pd.DataFrame(result)
     logger.debug(df)
