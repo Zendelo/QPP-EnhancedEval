@@ -5,6 +5,24 @@ from approvaltests import verify_file
 import tempfile
 
 class TirexIntegrationTest(unittest.TestCase):
+    def test_on_nfcorpus_dataset_with_approvaltests(self):
+        tira = Client()
+        index_dir = tira.get_run_output('ir-benchmarks/tira-ir-starter/Index (tira-ir-starter-pyterrier)', 'nfcorpus-test-20230107-training') + '/index'
+        queries = tira.download_dataset('ir-benchmarks', 'nfcorpus-test-20230107-training') + '/queries.jsonl'
+
+        with tempfile.TemporaryDirectory() as out_dir, tempfile.TemporaryDirectory() as stats_dir:
+            args = parse_args([
+                '-ti', index_dir,
+                '--jsonl_queries', queries,
+                '--output', out_dir,
+                '--stats_index_path',  stats_dir,
+                '--predict', '--retrieve', '--cleanOutput'
+            ])
+            main(args)
+
+            # I only spot-checked that the output looks reasonable, no in-depth tests
+            verify_file(out_dir + '/queries.jsonl')
+
     def test_on_cranfield_dataset_with_approvaltests(self):
         tira = Client()
         index_dir = tira.get_run_output('ir-benchmarks/tira-ir-starter/Index (tira-ir-starter-pyterrier)', 'cranfield-20230107-training') + '/index'
