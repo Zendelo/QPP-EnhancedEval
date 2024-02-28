@@ -24,13 +24,13 @@ class CustomRunFileForPredictionTest(unittest.TestCase):
             self.assertEqual(actual.iloc[1].to_dict()['qid'], 2.0)
             self.assertEqual(actual.iloc[1].to_dict()['wig+10'], 4.2054528045)
             self.assertEqual(actual.iloc[1].to_dict()['nqc+100'], 0.2547211364)
-            self.assertEqual(str(actual.iloc[1].to_dict()['smv+100']), 'nan')
+            self.assertEqual(actual.iloc[1].to_dict()['smv+100'], -20.8816444259)
             self.assertEqual(actual.iloc[1].to_dict()['clarity+1000+100'],  2.240679245)
 
             self.assertEqual(actual.iloc[2].to_dict()['qid'], 3.0)
             self.assertEqual(actual.iloc[2].to_dict()['wig+10'], -20.8716444259)
             self.assertEqual(actual.iloc[2].to_dict()['nqc+100'], 6.6373379689)
-            self.assertEqual(str(actual.iloc[2].to_dict()['smv+100']), 'nan')
+            self.assertEqual(actual.iloc[2].to_dict()['smv+100'], -20.8816444259)
             self.assertEqual(actual.iloc[2].to_dict()['clarity+1000+100'],  3.2047245641)
 
     def test_with_run_file_where_one_query_is_highly_effective_approvaltest(self):

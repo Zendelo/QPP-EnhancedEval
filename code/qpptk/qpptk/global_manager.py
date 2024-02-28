@@ -11,7 +11,7 @@ from qpptk import Config, IndexText, IndexDB, QueryParserText, QueryParserCiff, 
 
 logger = Config.logger
 TREC_RES_COLUMNS = ['qid', 'iteration', 'docNo', 'rank', 'docScore', 'method']
-QPP_SCORE_FOR_FAILED_RETRIEVAL = -1000000000
+QPP_SCORE_FOR_FAILED_RETRIEVAL = None
 
 def init_proc(*args):
     kwargs = dict(args)

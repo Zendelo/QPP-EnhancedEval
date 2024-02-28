@@ -385,7 +385,14 @@ def main(args):
                             continue
                         qid_to_preds[i['qid']][k] = v
 
-            pd.DataFrame([v for _, v in qid_to_preds.items()]).to_json(results_dir + '/queries.jsonl', lines=True, orient='records')
+            ret = pd.DataFrame([v for _, v in qid_to_preds.items()])
+            min_score = 0
+            for _, i in ret.iterrows():
+                for j in i:
+                    if j and type(j) == float and j < min_score:
+                        min_score = j  
+            ret = ret.fillna(min_score - 0.01)
+            ret.to_json(results_dir + '/queries.jsonl', lines=True, orient='records')
 
     if args.cleanOutput:
         for d in os.listdir(args.output):
